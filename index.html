@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scratch Games — Lobby</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse 120% 80% at 50% -20%, #1e3a5f 0%, #0f172a 45%, #020617 100%);
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .lobby {
+      text-align: center;
+      max-width: 32rem;
+    }
+
+    .lobby h1 {
+      margin: 0 0 2rem;
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .open-game {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.875rem 2rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%);
+      border-radius: 999px;
+      box-shadow: 0 4px 24px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .open-game:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(14, 165, 233, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .open-game:active {
+      transform: translateY(0);
+    }
+
+    .games {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+
+    .lobby-note {
+      margin: 0 0 1.25rem;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: #94a3b8;
+      max-width: 28rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .lobby-note a {
+      color: #7dd3fc;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      background: #000;
+    }
+
+    .overlay.is-open {
+      display: flex;
+    }
+
+    .overlay-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .close-btn {
+      appearance: none;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .close-btn:hover {
+      background: #334155;
+      border-color: #475569;
+    }
+
+    .overlay iframe {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      border: 0;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby">
+    <h1>scratch games</h1>
+    <p class="lobby-note">
+      TurboWarp can only embed projects that are
+      <strong>shared</strong> on Scratch. If you see “project token” /
+      unshared errors, the project owner must share the project, or use IDs
+      that load on
+      <a href="https://scratch.mit.edu/" target="_blank" rel="noopener">scratch.mit.edu</a>.
+      See
+      <a href="https://docs.turbowarp.org/unshared-projects" target="_blank" rel="noopener"
+        >TurboWarp: unshared projects</a
+      >.
+    </p>
+    <div class="games">
+      <button
+        type="button"
+        class="open-game"
+        data-game-url="https://turbowarp.org/622435399/embed?fps=60&hqpen"
+      >
+        Game 1 (Terraria)
+      </button>
+      <button
+        type="button"
+        class="open-game"
+        data-game-url="https://turbowarp.org/10128407/embed?fps=60&hqpen"
+      >
+        Game 2 (Paper Minecraft)
+      </button>
+      <button
+        type="button"
+        class="open-game"
+        data-game-url="https://turbowarp.org/414716080/embed?fps=60&hqpen"
+      >
+        Game 3
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameOverlay" aria-hidden="true">
+    <div class="overlay-bar">
+      <button type="button" class="close-btn" id="closeGame">Close</button>
+    </div>
+    <iframe
+      id="gameFrame"
+      title="TurboWarp game"
+      src="about:blank"
+      allow="fullscreen; autoplay; clipboard-write; encrypted-media; gamepad"
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("gameOverlay");
+    const frame = document.getElementById("gameFrame");
+    const closeBtn = document.getElementById("closeGame");
+    const openButtons = document.querySelectorAll(".open-game");
+
+    let lastOpenButton = null;
+
+    function openOverlay(url) {
+      frame.src = url;
+      overlay.classList.add("is-open");
+      overlay.setAttribute("aria-hidden", "false");
+      closeBtn.focus();
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove("is-open");
+      overlay.setAttribute("aria-hidden", "true");
+      frame.src = "about:blank";
+      (lastOpenButton || openButtons[0])?.focus();
+    }
+
+    openButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        lastOpenButton = btn;
+        openOverlay(btn.dataset.gameUrl);
+      });
+    });
+
+    closeBtn.addEventListener("click", closeOverlay);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && overlay.classList.contains("is-open")) {
+        closeOverlay();
+      }
+    });
+  </script>
+</body>
+</html>
